@@ -1,5 +1,6 @@
 package com.example.project1;
 
+import com.google.common.io.ByteStreams;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -9,34 +10,24 @@ import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
-
-import java.awt.*;
-import java.io.*;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-
-import java.io.File;
-import java.sql.Array;
-import java.sql.Driver;
-import java.util.ArrayList;
-import java.util.Scanner;
-
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+//import org.openqa.selenium.FirefoxDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chromium.ChromiumDriver;
+import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.firefox.FirefoxOptions;
 
-public class HelloApplication extends Application {
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Scanner;
+
+public class  HelloApplication extends Application {
     @Override
     public void start(Stage stage) throws IOException {
 
@@ -72,19 +63,26 @@ public class HelloApplication extends Application {
                 return false;
             }
         }
+
         // Определение директории
-        File dir = new File("src\\main\\resources\\com\\example\\project1\\Фотки");
+        String res = new String (HelloApplication.class.getResource("Photo").openStream().readAllBytes());
+
         // Чтение полного списка файлов каталога
+        String[] filesStr = res.split("\n");
 
         // Чтение списка файлов каталога
-        // с расширениями "png" и "jpg"
-        File[] lst = dir.listFiles(new Filter("png,jpg"));
+        // с расширениями "png" и "jpg" TODO filter
+        File[] lst = new File[filesStr.length];
+        for (int i = 0; i < filesStr.length; i++) {
+            lst[i] = new File( HelloApplication.class.getResource("Photo").toExternalForm() + '/' + filesStr[i]);
+        }
         System.out.println ("lst2.length = " + lst.length);
         int rndm =  (int) Math.floor(getRandomDoubleBetweenRange(0, lst.length-1));
 
-        System.out.println("Rand " + lst[rndm]);
-        String st = lst[rndm].toString();
-        Image img = new Image(lst[rndm].toURI().toURL().toExternalForm());
+        String st = filesStr[rndm];
+        System.out.println("Rand " + st);
+//        Image img = new Image(lst[rndm].toURI().toURL().toExternalForm());
+        Image img = new Image(HelloApplication.class.getResourceAsStream("Photo/" + st));
         FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("alpha.fxml"));
         Scene scene = new Scene( fxmlLoader.load(), Math.min(600,img.getWidth()), Math.min(600,img.getHeight()) + 70);
 
@@ -99,7 +97,8 @@ public class HelloApplication extends Application {
         java.util.List<String> film = new ArrayList<String>();
         File file = new File(
                 "src\\main\\resources\\com\\example\\project1\\film.txt");
-        Scanner sc = new Scanner(file);
+
+        Scanner sc = new Scanner(HelloApplication.class.getResource("film.txt").openStream());
         while (sc.hasNextLine())
            film.add(sc.nextLine());
         int filmid = (int) Math.floor(getRandomDoubleBetweenRange(0, film.size()-1));
@@ -117,14 +116,19 @@ public class HelloApplication extends Application {
                     public void handle(ActionEvent event) {
                         final Stage dialog = new Stage();
 
-                        File file = new File(
-                                "src\\main\\resources\\com\\example\\project1\\film.txt");
+//                        File file = new File(
+//                                "src\\main\\resources\\com\\example\\project1\\film.txt");
                         Scanner sc = null;
                         try {
-                            sc = new Scanner(file);
-                        } catch (FileNotFoundException e) {
-                            e.printStackTrace();
+                            sc = new Scanner(HelloApplication.class.getResource("film.txt").openStream());
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
                         }
+//                        try {
+//                            sc = new Scanner(file);
+//                        } catch (FileNotFoundException e) {
+//                            e.printStackTrace();
+//                        }
                         while (sc.hasNextLine())
                             film.add(sc.nextLine());
 
@@ -142,10 +146,21 @@ public class HelloApplication extends Application {
                             txt.setText(movie);
                             System.out.println("txt "  + txt);
 
-                            System.setProperty("webdriver.chrome.driver", "src\\main\\resources\\com\\example\\project1\\chromedriver.exe");
+//                            System.setProperty("webdriver.chrome.driver", "/home/artem/Загрузки/selenium-java-4.11.0.zip");
                             //create chrome instance
-                             WebDriver driver = new ChromeDriver();
+//                            System.setProperty("webdriver.chrome.logfile", "chromedriver.log");
+//                            System.setProperty("webdriver.chrome.verboseLogging", "true");
+//                            WebDriver dr = new FirefoxDriver();
+                            ChromeDriverService service=new ChromeDriverService.Builder().withLogOutput(System.out).build();
+
+                            WebDriver driver = new ChromeDriver(service);
+//                            FirefoxOptions options = new FirefoxOptions();
+//                            options.addArguments("-headless");
+//                            WebDriver driver = new FirefoxDriver(options);
+
+
                             driver.get("https://ya.ru/");
+//                            driver.get("https://selenium.dev");
                             WebElement element = driver.findElement(By.xpath("//input[@name='text']"));
                             element.sendKeys("смотреть " + movie);
                             WebElement button = driver.findElement(By.xpath("//button[@type='submit']"));
